@@ -8,10 +8,8 @@ def worker():
     queue = TaskQueue(connection)
     if queue.get_length() > 0:
         queue.dequeue()
-        return True
     else:
         print('No tasks in queue')
-        return False
 
 
 if __name__ == '__main__':
