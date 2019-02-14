@@ -1,6 +1,7 @@
 import random
 import pickle
 from task import Task
+from statuses import Status
 
 QUEUE_NAME = 'task_queue'
 
@@ -21,6 +22,12 @@ class TaskQueue:
         _, serialized_task = self.connection.brpop(self.queue_name)
         task = pickle.loads(serialized_task)
         task.process_task()
+        task.status = Status.COMPLETED
+        self.connection.hmset(f'task:{task.task_id}', {
+            'create_time': task.create_time,
+            'start_time': task.start_time,
+            'exec_time': task.exec_time
+        })
         return task.task_id
 
     def get_length(self):
