@@ -1,6 +1,6 @@
 import random
-import pickle
-from task import Task
+import task
+from datetime import datetime
 from statuses import Status
 
 QUEUE_NAME = 'task_queue'
@@ -14,24 +14,27 @@ class TaskQueue:
 
     def enqueue(self):
         task_id = self.connection.incr('task_id')
-        task = Task(task_id, random.randint(0, 10))
-        serialized_task = pickle.dumps(task, protocol=pickle.HIGHEST_PROTOCOL)
-        self.connection.lpush(self.queue_name, serialized_task)
+        self.connection.lpush(self.queue_name, task_id)
         self.connection.hmset(f'task:{task_id}', {
-            'create_time': task.create_time,
-            'start_time': task.start_time,
-            'exec_time': task.exec_time,
-            'status': Status.IN_QUEUE
+            'create_time': datetime.now(),
+            'start_time': None,
+            'exec_time': random.randint(0, 10),
+            'status': Status.IN_QUEUE.name
         })
-        return task.task_id
+        return task_id
 
     def dequeue(self):
-        _, serialized_task = self.connection.brpop(self.queue_name)
-        task = pickle.loads(serialized_task)
-        self.connection.hset(f'task:{task.task_id}', 'status', Status.RUN)
-        task.process_task()
-        self.connection.hset(f'task:{task.task_id}', 'status', Status.COMPLETED)
-        return task.task_id
+        _, task_id = self.connection.brpop(self.queue_name)
+        self.connection.hset(f'task:{task_id}', 'status', Status.RUN.name)
+        self.connection.hset(f'task:{task_id}', 'start_time', datetime.now())
+        exec_time = self.connection.hget(f'task:{task_id}', 'exec_time')
+        try:
+            task.process_task(task_id, int(exec_time))
+        except ValueError:
+            print(f'Task #{task_id} has incompatible exec_time, will be processed with 0')
+            task.process_task(task_id, 0)
+        self.connection.hset(f'task:{task_id}', 'status', Status.COMPLETED.name)
+        return task_id
 
     def get_length(self):
         return self.connection.llen(self.queue_name)
