@@ -1,3 +1,5 @@
+# Available task statuses enumeration
+
 from enum import Enum
 
 
