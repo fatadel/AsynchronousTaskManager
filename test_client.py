@@ -1,3 +1,6 @@
+# Test client creating NUMBER_OF_TASKS at once
+# For debug purposes only
+
 from app import connection
 from task_queue import TaskQueue
 
