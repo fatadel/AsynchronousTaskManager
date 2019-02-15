@@ -1,3 +1,6 @@
+# Application entry point
+# Note that task_handler.py must be run separately
+
 import redis
 from flask import Flask, jsonify
 from task_queue import TaskQueue

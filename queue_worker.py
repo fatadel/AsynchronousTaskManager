@@ -1,3 +1,6 @@
+# Queue worker
+# Dequeues tasks if available
+
 from task_queue import TaskQueue
 from app import connection
 
